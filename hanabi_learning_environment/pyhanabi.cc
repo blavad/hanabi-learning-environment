@@ -823,6 +823,7 @@ void DeleteObservationEncoder(pyhanabi_observation_encoder_t* encoder) {
 char* ObservationShape(pyhanabi_observation_encoder_t* encoder) {
   REQUIRE(encoder != nullptr);
   REQUIRE(encoder->encoder != nullptr);
+
   auto obs_enc = reinterpret_cast<hanabi_learning_env::ObservationEncoder*>(
       encoder->encoder);
   std::vector<int> shape = obs_enc->Shape();
@@ -846,10 +847,12 @@ char* EncodeObservation(pyhanabi_observation_encoder_t* encoder,
       encoder->encoder);
   auto obs = reinterpret_cast<hanabi_learning_env::HanabiObservation*>(
       observation->observation);
-  std::vector<int> encoding = obs_enc->Encode(*obs);
+
+  std::vector<float> encoding = obs_enc->Encode(*obs);
   std::string obs_str = "";
   for (int i = 0; i < encoding.size(); i++) {
-    obs_str += (encoding[i] ? "1" : "0");
+    //obs_str += (encoding[i] ? "1" : "0");
+    obs_str += std::to_string(encoding[i]);
     if (i != encoding.size() - 1) {
       obs_str += ",";
     }

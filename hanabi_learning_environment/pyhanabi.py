@@ -968,7 +968,7 @@ class ObservationEncoder(object):
     lib.DeleteString(c_encoding_str)
     # Canonical observations are bit strings, so it is ok to encode using a
     # string. For float or double observations, make a custom object
-    encoding = [int(x) for x in encoding_string.split(",")]
+    encoding = [float(x) for x in encoding_string.split(",")]
     return encoding
 
 
