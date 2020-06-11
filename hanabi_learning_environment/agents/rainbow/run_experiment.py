@@ -338,7 +338,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
 
   agent.end_episode(reward_since_last_action)
 
-  tf.logging.info('EPISODE: %d %g', step_number, total_reward)
+  # tf.logging.info('EPISODE: %d %g', step_number, total_reward)
   return step_number, total_reward
 
 
