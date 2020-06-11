@@ -28,6 +28,7 @@ from absl import app
 from absl import flags
 
 from third_party.dopamine import logger
+from hanabi_coop.agent import SimpleAgent
 
 import run_experiment
 
@@ -80,6 +81,7 @@ def launch_experiment():
   environment = run_experiment.create_environment()
   obs_stacker = run_experiment.create_obs_stacker(environment)
   agent = run_experiment.create_agent(environment, obs_stacker)
+  bot = SimpleAgent({}, action_form='int')
 
   checkpoint_dir = '{}/checkpoints'.format(FLAGS.base_dir)
   start_iteration, experiment_checkpointer = (
@@ -88,7 +90,7 @@ def launch_experiment():
                                               checkpoint_dir,
                                               FLAGS.checkpoint_file_prefix))
 
-  run_experiment.run_experiment(agent, environment, start_iteration,
+  run_experiment.run_experiment(agent, bot, environment, start_iteration,
                                 obs_stacker,
                                 experiment_logger, experiment_checkpointer,
                                 checkpoint_dir,
