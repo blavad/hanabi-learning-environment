@@ -296,7 +296,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
   if current_player==0 and bot is not None:
     action = bot.action(observations['player_observations'][current_player])
   else:
-    action = agent.begin_episode(current_player, legal_moves, observation_vector)
+    action = agent.begin_episode(current_player, legal_moves, observation_vector).item()
 
   is_done = False
   total_reward = 0
@@ -308,7 +308,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
   reward_since_last_action = np.zeros(environment.players)
 
   while not is_done:
-    observations, reward, is_done, _ = environment.step(action.item())
+    observations, reward, is_done, _ = environment.step(action)
 
     modified_reward = max(reward, 0) if LENIENT_SCORE else reward
     total_reward += modified_reward
@@ -325,12 +325,12 @@ def run_one_episode(agent, bot, environment, obs_stacker):
     else:
       if current_player in has_played:
         action = agent.step(reward_since_last_action[current_player],
-                            current_player, legal_moves, observation_vector)
+                            current_player, legal_moves, observation_vector).item()
       else:
         # Each player begins the episode on their first turn (which may not be
         # the first move of the game).
         action = agent.begin_episode(current_player, legal_moves,
-                                     observation_vector)
+                                     observation_vector).item()
     has_played.add(current_player)
 
     # Reset this player's reward accumulator.
