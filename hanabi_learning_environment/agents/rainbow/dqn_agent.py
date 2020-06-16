@@ -107,6 +107,7 @@ class DQNAgent(object):
                graph_template=dqn_template,
                tf_device='/cpu:*',
                use_staging=True,
+               name="DQNAgent",
                optimizer=tf.train.RMSPropOptimizer(
                    learning_rate=.0025,
                    decay=0.95,
@@ -171,6 +172,7 @@ class DQNAgent(object):
     self.training_steps = 0
     self.batch_staged = False
     self.optimizer = optimizer
+    self.name = name
 
     with tf.device(tf_device):
       # Calling online_convnet will generate a new graph as defined in
@@ -416,6 +418,38 @@ class DQNAgent(object):
                                self.legal_actions_ph: legal_actions})
       assert legal_actions[action] == 0.0, 'Expected legal action.'
       return action
+
+  def reset(self):
+        pass
+
+  def get_a_q(self, observation):
+    if observation['current_player_offset'] == 0:
+      current_player_observation = (observation)
+      current_player = current_player_observation['current_player']
+      legal_moves = current_player_observation['legal_moves_as_int']
+
+      new_legal_moves = np.full(self.num_actions, -float('inf'))
+      if legal_moves:
+        new_legal_moves[legal_moves] = 0
+      legal_moves = new_legal_moves
+
+      observation_vector = current_player_observation['vectorized']
+      self.obs_stacker.add_observation(observation_vector, current_player)
+      observation_vector = self.obs_stacker.get_observation_stack(current_player)
+
+      self.state[0, :, 0] = observation_vector
+
+      action, q = self._sess.run([self._q_argmax,self._q],
+                              {self.state_ph: self.state,
+                               self.legal_actions_ph: legal_moves})
+      assert legal_moves[action] == 0.0, 'Expected legal action.'
+      return action.item(), q
+    else:
+      return None, None
+    
+  def greedy_action(self, observation):
+        return self.get_a_q(observation)[0]
+        
 
   def _train_step(self):
     """Runs a single training step.

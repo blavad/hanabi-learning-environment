@@ -57,6 +57,10 @@ flags.DEFINE_string('logging_dir', '',
 flags.DEFINE_string('logging_file_prefix', 'log',
                     'Prefix to use for the log files.')
 
+flags.DEFINE_string('bot', None,
+                    'Bot to use for learning.')
+
+
 
 def launch_experiment():
   """Launches the experiment.
@@ -81,8 +85,13 @@ def launch_experiment():
   environment = run_experiment.create_environment()
   obs_stacker = run_experiment.create_obs_stacker(environment)
   agent = run_experiment.create_agent(environment, obs_stacker)
-  bot = SimpleAgent({}, action_form='int')
+  bot = None if FLAGS.bot is None else SimpleAgent({}, action_form='int')
 
+  adv = bot.name if bot is not None else agent.name
+  print("\n\n\n#> Start learning :", agent.name, "vs", adv)
+  print("#> Observation size :", obs_stacker.observation_size())
+  print("#> Action size :", environment.num_moves())
+  print("#> Nb players :", environment.players)
   checkpoint_dir = '{}/checkpoints'.format(FLAGS.base_dir)
   start_iteration, experiment_checkpointer = (
       run_experiment.initialize_checkpointing(agent,
