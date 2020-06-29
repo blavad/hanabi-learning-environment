@@ -57,9 +57,14 @@ flags.DEFINE_string('logging_dir', '',
 flags.DEFINE_string('logging_file_prefix', 'log',
                     'Prefix to use for the log files.')
 
+flags.DEFINE_string('env', 'Hanabi-Full',
+                    'Environment to use.')
+
 flags.DEFINE_string('bot', None,
                     'Bot to use for learning.')
 
+flags.DEFINE_string('intent_ckpt', None,
+                    'Checkpoint to intent model.')
 
 
 def launch_experiment():
@@ -82,9 +87,15 @@ def launch_experiment():
   run_experiment.load_gin_configs(FLAGS.gin_files, FLAGS.gin_bindings)
   experiment_logger = logger.Logger('{}/logs'.format(FLAGS.base_dir))
 
-  environment = run_experiment.create_environment()
+  from hanabi_learning_environment.rl_env import HanabiInt2ActEnv
+
+
+  environment = run_experiment.create_environment(game_type=FLAGS.env)
+  if FLAGS.intent_ckpt is not None:
+    environment.load_intent_policy(FLAGS.intent_ckpt)
+    
   obs_stacker = run_experiment.create_obs_stacker(environment)
-  agent = run_experiment.create_agent(environment, obs_stacker)
+  agent = run_experiment.create_agent(environment, obs_stacker, position=-1)
   bot = None if FLAGS.bot is None else SimpleAgent({}, action_form='int')
 
   adv = bot.name if bot is not None else agent.name

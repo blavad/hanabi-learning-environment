@@ -323,7 +323,7 @@ class DQNAgent(object):
                             self.action)
     return self.action
 
-  def end_episode(self, final_rewards):
+  def end_episode(self, final_rewards, bot):
     """Signals the end of the episode to the agent.
 
     Args:
@@ -331,7 +331,7 @@ class DQNAgent(object):
         player gets their own reward, which is the sum of the rewards since
         their last move.
     """
-    self._post_transitions(terminal_rewards=final_rewards)
+    self._post_transitions(terminal_rewards=final_rewards, bot=bot)
 
   def _record_transition(self, current_player, reward, observation,
                          legal_actions, action, begin=False):
@@ -356,7 +356,7 @@ class DQNAgent(object):
                    np.array(legal_actions, dtype=np.float32, copy=True),
                    action, begin))
 
-  def _post_transitions(self, terminal_rewards):
+  def _post_transitions(self, terminal_rewards, bot=None):
     """Posts this episode to the replay memory.
 
     Each player has their own episode, which is posted separately.
@@ -366,22 +366,25 @@ class DQNAgent(object):
     """
     # We store each player's episode consecutively in the replay memory.
     for player in range(self.num_players):
-      num_transitions = len(self.transitions[player])
+      if player==0 and bot is not None:
+        continue
+      else:
+        num_transitions = len(self.transitions[player])
 
-      for index, transition in enumerate(self.transitions[player]):
-        # Add: o_t, l_t, a_t, r_{t+1}, term_{t+1}
-        final_transition = index == num_transitions - 1
-        if final_transition:
-          reward = terminal_rewards[player]
-        else:
-          reward = self.transitions[player][index + 1].reward
+        for index, transition in enumerate(self.transitions[player]):
+          # Add: o_t, l_t, a_t, r_{t+1}, term_{t+1}
+          final_transition = index == num_transitions - 1
+          if final_transition:
+            reward = terminal_rewards[player]
+          else:
+            reward = self.transitions[player][index + 1].reward
 
-        self._store_transition(transition.observation, transition.action,
-                               reward, final_transition,
-                               transition.legal_actions)
+          self._store_transition(transition.observation, transition.action,
+                                 reward, final_transition,
+                                 transition.legal_actions)
 
-      # Now that this episode has been stored, drop it from the transitions
-      # buffer.
+        # Now that this episode has been stored, drop it from the transitions
+        # buffer.
       self.transitions[player] = []
 
   def _select_action(self, observation, legal_actions):

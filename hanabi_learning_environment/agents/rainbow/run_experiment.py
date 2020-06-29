@@ -129,7 +129,7 @@ def create_environment(game_type='Hanabi-Full', num_players=2):
 
 
 @gin.configurable
-def create_obs_stacker(environment, history_size=4):
+def create_obs_stacker(environment, history_size=1):
   """Creates an observation stacker.
 
   Args:
@@ -146,7 +146,7 @@ def create_obs_stacker(environment, history_size=4):
 
 
 @gin.configurable
-def create_agent(environment, obs_stacker, agent_type='DQN'):
+def create_agent(environment, obs_stacker, agent_type='DQN', position=0):
   """Creates the Hanabi agent.
 
   Args:
@@ -162,12 +162,12 @@ def create_agent(environment, obs_stacker, agent_type='DQN'):
   """
   if agent_type == 'DQN':
     return dqn_agent.DQNAgent(observation_size=obs_stacker.observation_size(),
-                              num_actions=environment.num_moves(),
+                              num_actions=environment.num_moves(position),
                               num_players=environment.players)
   elif agent_type == 'Rainbow':
     return rainbow_agent.RainbowAgent(
         observation_size=obs_stacker.observation_size(),
-        num_actions=environment.num_moves(),
+        num_actions=environment.num_moves(position),
         num_players=environment.players)
   else:
     raise ValueError('Expected valid agent_type, got {}'.format(agent_type))
@@ -268,7 +268,7 @@ def parse_observations(observations, num_actions, obs_stacker):
       observations['player_observations'][current_player])
 
   legal_moves = current_player_observation['legal_moves_as_int']
-  legal_moves = format_legal_moves(legal_moves, num_actions)
+  legal_moves = format_legal_moves(legal_moves, num_actions(current_player))
 
   observation_vector = current_player_observation['vectorized']
   obs_stacker.add_observation(observation_vector, current_player)
@@ -292,8 +292,9 @@ def run_one_episode(agent, bot, environment, obs_stacker):
   obs_stacker.reset_stack()
   observations = environment.reset()
   current_player, legal_moves, observation_vector = (
-      parse_observations(observations, environment.num_moves(), obs_stacker))
+      parse_observations(observations, environment.num_moves, obs_stacker))
   if current_player==0 and bot is not None:
+    # print(observations['player_observations'][current_player]['legal_moves_as_int'])
     action = bot.action(observations['player_observations'][current_player])
   else:
     action = agent.begin_episode(current_player, legal_moves, observation_vector).item()
@@ -319,7 +320,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
     if is_done:
       break
     current_player, legal_moves, observation_vector = (
-        parse_observations(observations, environment.num_moves(), obs_stacker))
+        parse_observations(observations, environment.num_moves, obs_stacker))
     if current_player==0 and bot is not None:
       action = bot.action(observations['player_observations'][current_player])
     else:
@@ -336,7 +337,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
     # Reset this player's reward accumulator.
     reward_since_last_action[current_player] = 0
 
-  agent.end_episode(reward_since_last_action)
+  agent.end_episode(reward_since_last_action, bot)
 
   # tf.logging.info('EPISODE: %d %g', step_number, total_reward)
   return step_number, total_reward
