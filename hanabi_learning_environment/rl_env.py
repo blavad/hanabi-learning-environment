@@ -18,7 +18,7 @@ from __future__ import division
 import random
 
 from hanabi_learning_environment import pyhanabi
-from hanabi_learning_environment.pyhanabi import color_char_to_idx
+from hanabi_learning_environment.pyhanabi import color_char_to_idx, HanabiMoveType
 
 import tensorflow as tf
 from rainbow_agent import RainbowAgent
@@ -518,6 +518,7 @@ class HanabiInt2ActEnv(HanabiEnv):
 
         self.base_dir = config.get('base_dir', None)
         self.agent_pos = config.get('pos', self.players-1)
+        self.trust_rate = config.get('trust_rate', 0.2)
         
         self.intent_type = config.get(
             'intent_type', [HanabiIntentEnv.default_intent for _ in range(self.players)])
@@ -540,6 +541,10 @@ class HanabiInt2ActEnv(HanabiEnv):
         
         if self.base_dir is not None:
             self.load_intent_policy(self.base_dir)
+            
+        self.intent2actions = {"play":[HanabiMoveType.PLAY], 
+                               "discard":[HanabiMoveType.DISCARD],
+                               "no_intent":[HanabiMoveType.REVEAL_COLOR, HanabiMoveType.REVEAL_RANK, HanabiMoveType.DEAL, HanabiMoveType.INVALID]}
 
     def reset(self):
         assert self.base_dir is not None, "An IntentAgent policy must be loaded"
@@ -554,41 +559,71 @@ class HanabiInt2ActEnv(HanabiEnv):
     def vectorized_observation_shape(self, pos=-1):
         return (super().vectorized_observation_shape()[0] + len(HanabiIntentEnv.intent_classes[self.intent_type[pos]]),)
     
+    def step(self, action):
+        if isinstance(action, dict):
+            # Convert dict action HanabiMove
+            tmp_a = self._build_move(action)
+        elif isinstance(action, int):
+            # Convert int action into a Hanabi move.
+            tmp_a = self.game.get_move(action)
+        else:
+            raise ValueError("Expected action as dict or int, got: {}".format(action))
+        penalty = 0
+        if self.state.cur_player() == self.agent_pos:
+            if tmp_a.type() not in self.intent2actions[self.prev_intent]:
+                penalty = self.trust_rate
+        obs, rew, done, info = super().step(action)
+        return (obs, rew - penalty, done, info)
+    
     def _extract_dict_from_backend(self, player_id, observation):
         # print("Pass in HanabiInt2ActEnv ({class_name}) - extract dict".format(class_name=self.__class__))
         obs_dict = super()._extract_dict_from_backend(player_id, observation)
         if player_id == self.agent_pos:
-            # Create observation dict for IntentAgent
-            int_obs_dict = obs_dict.copy()
+            # Add intent at the end of the vectorized observation
             intent_class = HanabiIntentEnv.intent_classes[self.intent_type[player_id]]
-            # Transform legal_moves to fit IntentAgent
-            bool_act = [False]*len(intent_class)
-            valide_act = dict(zip(intent_class, bool_act))
-            if player_id == int_obs_dict['current_player']:
-                for i in intent_class[2:]:
-                    valide_act[i] = True
-            int_obs_dict["legal_moves"] = []
-            int_obs_dict["legal_moves_as_int"] = []
-            for move in observation.legal_moves():
-                legal_move_as_dict = move.to_dict()
-                if legal_move_as_dict['action_type'] is "PLAY":
-                    valide_act["play"] = True
-                if legal_move_as_dict['action_type'] is "DISCARD":
-                    valide_act["discard"] = True
-            for ind, (key, valide) in enumerate(valide_act.items()):
-                if valide:
-                    int_obs_dict["legal_moves"].append(key)
-                    int_obs_dict["legal_moves_as_int"].append(ind)
-                        
-            intent = self.intent_agent.greedy_action(int_obs_dict)
-            # print(player_id, "Intent:", intent, "n",len(intent_class))
-            obs_dict['vectorized'] += [int(i==intent) for i in range(len(intent_class))]
+            
+            intent = self._get_intent(player_id, obs_dict)
+            if obs_dict["current_player"] == player_id:
+                self.prev_intent = intent_class[intent]
+                obs_dict['vectorized'] += [int(i==intent) for i in range(len(intent_class))]
+            else:
+                obs_dict['vectorized'] += [0 for _ in range(len(intent_class))]
         else:
             obs_dict['vectorized'] += [0 for _ in range(len(HanabiIntentEnv.intent_classes[self.intent_type[self.agent_pos]]))]
             
         return obs_dict
             
-
+        
+        
+    def _get_intent(self, player_id, obs_dict):
+        # Create observation dict for IntentAgent
+        int_obs_dict = obs_dict.copy()
+        intent_class = HanabiIntentEnv.intent_classes[self.intent_type[player_id]]
+        
+        # Transform legal_moves to fit IntentAgent
+        bool_act = [False]*len(intent_class)
+        valide_act = dict(zip(intent_class, bool_act))
+        
+        # Check valide intents
+        for move in obs_dict["legal_moves"]:
+            legal_move_as_dict = move.to_dict()
+            if legal_move_as_dict['action_type'] is "PLAY":
+                valide_act["play"] = True
+            if legal_move_as_dict['action_type'] is "DISCARD":
+                valide_act["discard"] = True
+            if "REVEAL" in legal_move_as_dict['action_type']:
+                valide_act["no_intent"] = True
+                
+        # Create lists of legal intents
+        int_obs_dict["legal_moves"] = []
+        int_obs_dict["legal_moves_as_int"] = []
+        for ind, (key, valide) in enumerate(valide_act.items()):
+            if valide:
+                int_obs_dict["legal_moves"].append(key)
+                int_obs_dict["legal_moves_as_int"].append(ind)
+        
+        return self.intent_agent.greedy_action(int_obs_dict)
+            
 class HanabiIntentEnv(HanabiEnv):
     """RL interface to a Hanabi environment.
 
@@ -673,7 +708,92 @@ class HanabiIntentEnv(HanabiEnv):
             return self._get_random_move(legal_moves)
         # NO INTENT 
         elif intent_name == "no_intent":
-            return self._get_random_move(legal_moves)
+            hint = self.best_hint_to_give(super()._extract_dict_from_backend(player, self.state.observation(player)))
+            if hint is not None:
+                return hint
+            else:
+                return self._get_random_move(legal_moves)
+
+    def playable_card(self, card, fireworks):
+        """A card is playable if it can be placed on the fireworks pile."""
+        return card['rank'] == fireworks[card['color']]
+        
+    def best_hint_to_give(self, observation):
+        """ Select the best hint to give"""
+        if observation['information_tokens'] == 0:
+            return None
+        
+        hint = None
+        best_so_far = 0
+        player_to_hint = None
+        color_to_hint = None
+        rank_to_hint = None
+        
+        fireworks = observation['fireworks']
+        # Check if there are any playable cards in the hands of the opponents.
+        for player_offset in range(1, observation['num_players']):
+            player_hand = observation['observed_hands'][player_offset]
+            player_hints = observation['card_knowledge'][player_offset]
+            
+            is_really_playable = []
+            for card in player_hand :
+                is_really_playable.append(True if self.playable_card(card, fireworks) else False)
+            
+            for color in fireworks.keys():
+                informative_content = 0
+                misinformative = False
+                for c, card in enumerate(player_hand) :
+                    if card['color'] != color:
+                        continue
+                    if is_really_playable[c] and player_hints[c]['color'] is None:
+                        informative_content += 1
+                    elif not is_really_playable[c]:
+                        misinformative = True
+                        break
+                if misinformative:
+                    continue
+                if informative_content > best_so_far:
+                    best_so_far = informative_content
+                    color_to_hint = color
+                    rank_to_hint = None
+                    player_to_hint = player_offset
+                    
+            for rank in range(5):
+                informative_content = 0
+                misinformative = False
+                for c, card in enumerate(player_hand) :
+                    if card['rank'] != rank:
+                        continue
+                    if is_really_playable[c] and player_hints[c]['rank'] is None:
+                        informative_content += 1
+                    elif not is_really_playable[c]:
+                        misinformative = True
+                        break
+                if misinformative:
+                    continue
+                if informative_content > best_so_far:
+                    best_so_far = informative_content
+                    color_to_hint = None
+                    rank_to_hint = rank
+                    player_to_hint = player_offset
+            
+        if best_so_far == 0:
+            hint = None
+        else:
+            if rank_to_hint is not None:
+                hint = {
+                        'action_type': 'REVEAL_RANK',
+                        'rank': rank_to_hint,
+                        'target_offset': player_to_hint
+                    }
+            elif color_to_hint is not None :
+                hint = {
+                        'action_type': 'REVEAL_COLOR',
+                        'color': color_to_hint,
+                        'target_offset': player_to_hint
+                    }
+        return hint
+    
         
     def _get_random_move(self, legal_moves):
         # Choose random action
@@ -738,19 +858,31 @@ class MarlWrapperEnv(object):
     
     def __init__(self, env):
         self.hanabi_env = env
+    
+    @property
+    def state(self):
+        return self.hanabi_env.state
+    
+    @property
+    def game(self):
+        return self.hanabi_env.game
+    
+    def num_moves(self, player_id=None):
+        return self.hanabi_env.num_moves(player_id)
+        
     def reset(self):
-        obs = self.hanabi_env.reset(self)
+        obs = self.hanabi_env.reset()
         return obs['player_observations']
     
     def step(self, action):
-        current_player = self.state.cur_player()
+        current_player = self.hanabi_env.state.cur_player()
         single_action = action[current_player]
 
-        obs, reward, done, info = self.hanabi_env.step(self, single_action)
+        obs, reward, done, info = self.hanabi_env.step(single_action)
         
         rewrite_obs = obs['player_observations']
                 
-        return rewrite_obs, [reward]*self.players, [done]*self.players, info
+        return rewrite_obs, [reward]*self.hanabi_env.players, [done]*self.hanabi_env.players, info
 
 def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
     """Make an environment.

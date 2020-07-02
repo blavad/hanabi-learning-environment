@@ -1,1 +1,3 @@
 *.pyc
+hanabi_learning_environment/agents/rainbow/logs/
+hanabi_learning_environment/agents/rainbow/tmp/
