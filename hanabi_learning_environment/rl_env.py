@@ -583,6 +583,7 @@ class HanabiInt2ActEnv(HanabiEnv):
             intent_class = HanabiIntentEnv.intent_classes[self.intent_type[player_id]]
             
             intent = self._get_intent(player_id, obs_dict)
+            # print("!!!!!!!!!INTENT",intent)
             if obs_dict["current_player"] == player_id:
                 self.prev_intent = intent_class[intent]
                 obs_dict['vectorized'] += [int(i==intent) for i in range(len(intent_class))]
@@ -605,8 +606,8 @@ class HanabiInt2ActEnv(HanabiEnv):
         valide_act = dict(zip(intent_class, bool_act))
         
         # Check valide intents
-        for move in obs_dict["legal_moves"]:
-            legal_move_as_dict = move.to_dict()
+        for legal_move_as_dict in obs_dict["legal_moves"]:
+            # legal_move_as_dict = move.to_dict()
             if legal_move_as_dict['action_type'] is "PLAY":
                 valide_act["play"] = True
             if legal_move_as_dict['action_type'] is "DISCARD":
@@ -990,7 +991,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
         intent_type=fields[-num_players:]
         my_class = HanabiInt2ActEnv#HanabiInt2ActMarlEnv if "Marl" in environment_name else HanabiInt2ActEnv
         if "Very-Small" in environment_name:
-            return my_class(
+            env = my_class(
             config={
                 "colors":
                     1,
@@ -1001,7 +1002,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                 "intent_type":
                     intent_type,
                 "pos":
-                    -1,
+                    1,
                 "hand_size":
                     2,
                 "max_information_tokens":
@@ -1012,7 +1013,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                     pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
             })
         elif "Small" in environment_name:
-            return my_class(
+            env = my_class(
             config={
                 "colors":
                     2,
@@ -1023,7 +1024,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                 "intent_type":
                     intent_type,
                 "pos":
-                    -1,
+                    1,
                 "hand_size":
                     2,
                 "max_information_tokens":
@@ -1034,7 +1035,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                     pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
             })
         else:
-            return my_class(
+            env = my_class(
                 config={
                     "colors":
                         5,
@@ -1045,7 +1046,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                     "intent_type":
                         intent_type,
                     "pos":
-                        -1,
+                        1,
                     "max_information_tokens":
                         8,
                     "max_life_tokens":
@@ -1053,6 +1054,9 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
                     "observation_type":
                         pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
                 })
+        if "Marl" in environment_name:
+            env = MarlWrapperEnv(env)
+        return env
     elif environment_name == "Hanabi-Full-Minimal":
         return HanabiEnv(
             config={

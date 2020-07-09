@@ -31,6 +31,7 @@ from third_party.dopamine import logger
 from hanabi_coop.agent import SimpleAgent
 
 import run_experiment
+import logging
 
 FLAGS = flags.FLAGS
 
@@ -66,6 +67,10 @@ flags.DEFINE_string('bot', None,
 flags.DEFINE_string('intent_ckpt', None,
                     'Checkpoint to intent model.')
 
+flags.DEFINE_string('trust_rate', None,
+                    'Trust rate for second part of the training.')
+
+
 
 def launch_experiment():
   """Launches the experiment.
@@ -93,9 +98,10 @@ def launch_experiment():
   environment = run_experiment.create_environment(game_type=FLAGS.env)
   if FLAGS.intent_ckpt is not None:
     environment.load_intent_policy(FLAGS.intent_ckpt)
+    environment.trust_rate = FLAGS.trust_rate
     
   obs_stacker = run_experiment.create_obs_stacker(environment)
-  agent = run_experiment.create_agent(environment, obs_stacker, position=-1)
+  agent = run_experiment.create_agent(environment, obs_stacker, position=1)
   bot = None if FLAGS.bot is None else SimpleAgent({}, action_form='int')
 
   adv = bot.name if bot is not None else agent.name
