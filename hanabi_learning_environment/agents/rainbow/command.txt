@@ -1,0 +1,23 @@
+// INSTALL
+
+pip install absl-py gin-config tensorflow-gpu==1.15.0 numpy
+pip install git+https://github.com/blavad/marl.git
+
+git clone https://github.com/blavad/hanabi-learning-environment.git
+cd hanabi-learning-environment
+pip install .
+cd ..
+
+git clone https://gitlab.inria.fr/jdibango/david.albert.git
+cd david.albert/
+pip install .
+cd ..
+
+// RUN
+
+python train.py --base_dir=./tmp/rainbow_multi_simple --gin_files=configs/hanabi_rainbow.gin --bot=[SimpleAgent,SimpleAgentV2,SimpleAgentV3]
+
+
+OU
+
+python train.py --base_dir=./tmp/rainbow_long --gin_files=configs/hanabi_rainbow.gin --bot=SimpleAgent
