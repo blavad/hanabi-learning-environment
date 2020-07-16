@@ -28,6 +28,7 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import random
 
 from third_party.dopamine import checkpointer
 from third_party.dopamine import iteration_statistics
@@ -293,9 +294,15 @@ def run_one_episode(agent, bot, environment, obs_stacker):
   observations = environment.reset()
   current_player, legal_moves, observation_vector = (
       parse_observations(observations, environment.num_moves, obs_stacker))
+  if bot is not None:
+    if isinstance(bot, list):
+      curr_teammate = random.choice(bot)
+    else:
+      curr_teammate = bot
+    curr_teammate.reset()
   if current_player==0 and bot is not None:
     # print(observations['player_observations'][current_player]['legal_moves_as_int'])
-    action = bot.action(observations['player_observations'][current_player])
+    action = curr_teammate.action(observations['player_observations'][current_player])
   else:
     action = agent.begin_episode(current_player, legal_moves, observation_vector).item()
 
@@ -322,7 +329,7 @@ def run_one_episode(agent, bot, environment, obs_stacker):
     current_player, legal_moves, observation_vector = (
         parse_observations(observations, environment.num_moves, obs_stacker))
     if current_player==0 and bot is not None:
-      action = bot.action(observations['player_observations'][current_player])
+      action = curr_teammate.action(observations['player_observations'][current_player])
     else:
       if current_player in has_played:
         action = agent.step(reward_since_last_action[current_player],

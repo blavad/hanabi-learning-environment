@@ -593,8 +593,6 @@ class HanabiInt2ActEnv(HanabiEnv):
             obs_dict['vectorized'] += [0 for _ in range(len(HanabiIntentEnv.intent_classes[self.intent_type[self.agent_pos]]))]
             
         return obs_dict
-            
-        
         
     def _get_intent(self, player_id, obs_dict):
         # Create observation dict for IntentAgent
@@ -884,6 +882,10 @@ class MarlWrapperEnv(object):
         rewrite_obs = obs['player_observations']
                 
         return rewrite_obs, [reward]*self.hanabi_env.players, [done]*self.hanabi_env.players, info
+    
+    def render(self):
+        print(self.hanabi_env.state.observation(self.hanabi_env.state.cur_player()))
+
 
 def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
     """Make an environment.
