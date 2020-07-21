@@ -21,3 +21,19 @@ python train.py --base_dir=./tmp/rainbow_multi_simple --gin_files=configs/hanabi
 OU
 
 python train.py --base_dir=./tmp/rainbow_long --gin_files=configs/hanabi_rainbow.gin --bot=SimpleAgent
+
+OU 
+
+python -um train --base_dir=./tmp/rainbow_multi_pupu_1 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies='pu-pu--'
+
+OU
+
+python -um train --base_dir=./tmp/rainbow_multi_pupu_2 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies='pu--pu-'
+
+OU
+
+python -um train --base_dir=./tmp/rainbow_multi_all --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies='*'
+
+OU
+
+python -um train --base_dir=./tmp/rainbow_multi_pudn --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies='p-u-d-n'

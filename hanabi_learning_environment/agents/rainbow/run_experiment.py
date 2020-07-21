@@ -314,7 +314,6 @@ def run_one_episode(agent, bot, environment, obs_stacker):
 
   # Keep track of per-player reward.
   reward_since_last_action = np.zeros(environment.players)
-
   while not is_done:
     observations, reward, is_done, _ = environment.step(action)
 

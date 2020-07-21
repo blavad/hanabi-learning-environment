@@ -30,7 +30,7 @@ import sys
 import re
 
 from third_party.dopamine import logger
-from hanabi_coop.agent import SimpleAgent, SimpleAgentV2, SimpleAgentV3
+from hanabi_coop.agent import SimpleAgent, SimpleAgentV2, SimpleAgentV3, AwwAgent, SimpleAgentMulti
 
 import run_experiment
 import logging
@@ -69,6 +69,10 @@ flags.DEFINE_string('bot', None,
 flags.DEFINE_string('intent_ckpt', None,
                     'Checkpoint to intent model.')
 
+
+flags.DEFINE_string('strategies', None,
+                    'Strategy condition to create multi simple bot player (ex. "up-up--", "---", "p-u-d-n")')
+
 flags.DEFINE_string('trust_rate', None,
                     'Trust rate for second part of the training.')
 
@@ -86,6 +90,24 @@ def launch_experiment():
       Checkpointer object.
     - Run the experiment.
     """
+    # import logging
+
+    # all_loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    # print(all_loggers)
+    # # get TF logger
+    # log = logging.getLogger('tensorflow')
+    # print("\n\n\n HANDLERS",log.handlers)
+    # log.setLevel(logging.DEBUG)
+
+    # # create formatter and add it to the handlers
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    # # create file handler which logs even debug messages
+    # fh = logging.FileHandler('tensorflow.log')
+    # fh.setLevel(logging.DEBUG)
+    # fh.setFormatter(formatter)
+    # log.addHandler(fh)
+    
     if FLAGS.base_dir == None:
         raise ValueError('--base_dir is None: please provide a path for '
                          'logs and checkpoints.')
@@ -100,7 +122,7 @@ def launch_experiment():
 
     obs_stacker = run_experiment.create_obs_stacker(environment)
     agent = run_experiment.create_agent(environment, obs_stacker, position=1)
-    print(FLAGS.bot)
+    print("\n\n\n\nBOT(s)", FLAGS.bot)
     list_names = re.match(r'\[([\w\W]+)\]', FLAGS.bot)
     if FLAGS.bot is None:
         bot = None
@@ -111,8 +133,12 @@ def launch_experiment():
                for name in bot_names if len(name) > 0]
         adv = bot_names
     else:
-        bot = getattr(sys.modules[__name__], FLAGS.bot)({}, action_form='int')
-        adv = bot.name
+        if FLAGS.bot=='SimpleAgentMulti' and FLAGS.strategies is not None:
+            bot = SimpleAgentMulti(strategies=FLAGS.strategies, action_form='int')
+            adv = bot.name
+        else:
+            bot = getattr(sys.modules[__name__], FLAGS.bot)({}, action_form='int')
+            adv = bot.name
 
     print("\n\n\n#> Start learning :", agent.name, "vs", adv)
     print("#> Observation size :", obs_stacker.observation_size())
