@@ -28,6 +28,7 @@ from absl import app
 from absl import flags
 import sys
 import re
+import json
 
 from third_party.dopamine import logger
 from hanabi_coop.agent import SimpleAgent, SimpleAgentV2, SimpleAgentV3, AwwAgent, SimpleAgentMulti
@@ -52,11 +53,14 @@ flags.DEFINE_string('base_dir', None,
 flags.DEFINE_string('checkpoint_dir', '',
                     'Directory where checkpoint files should be saved. If '
                     'empty, no checkpoints will be saved.')
+
 flags.DEFINE_string('checkpoint_file_prefix', 'ckpt',
                     'Prefix to use for the checkpoint files.')
+
 flags.DEFINE_string('logging_dir', '',
                     'Directory where experiment data will be saved. If empty '
                     'no checkpoints will be saved.')
+
 flags.DEFINE_string('logging_file_prefix', 'log',
                     'Prefix to use for the log files.')
 
@@ -134,7 +138,12 @@ def launch_experiment():
         adv = bot_names
     else:
         if FLAGS.bot=='SimpleAgentMulti' and FLAGS.strategies is not None:
-            bot = SimpleAgentMulti(strategies=FLAGS.strategies, action_form='int')
+            if '.' in FLAGS.strategies:
+                with open(FLAGS.strategies) as json_file:
+                    data = json.load(json_file)
+                    bot = SimpleAgentMulti(strategies=data['validation'], action_form='int')
+            else:
+                bot = SimpleAgentMulti(strategies=FLAGS.strategies, action_form='int')
             adv = bot.name
         else:
             bot = getattr(sys.modules[__name__], FLAGS.bot)({}, action_form='int')

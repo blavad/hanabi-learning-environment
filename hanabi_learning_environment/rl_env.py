@@ -638,9 +638,11 @@ class HanabiIntentEnv(HanabiEnv):
         observation, reward, done, info = environment.step(action)
     ```
     """
-    intent_classes = {"any": [],
-                      "pdn": ["play", "discard", "no_intent"],
-                      "pdni": ["play", "discard", "no_intent", "inform"]}
+    intent_classes = {
+                    "any": [],
+                    "pdn": ["play", "discard", "no_intent"],
+                    "pdn_num": ["play_0", "play_1","play_2", "play_3", "play_4", "discard_0", "discard_1","discard_2", "discard_3", "discard_4", "no_intent"]
+                    }
 
     default_intent = "any"
 
@@ -702,9 +704,10 @@ class HanabiIntentEnv(HanabiEnv):
                 return {'action_type': intent_name.upper(), 'card_index': 0}
             else:
                 return self._get_random_move(legal_moves)
-        # INFORM intent
-        elif intent_name == "inform":
-            return self._get_random_move(legal_moves)
+        elif "play_" in intent_name:
+            return {'action_type': 'PLAY' ,'card_index': int(intent_name[-1])}
+        elif "discard_" in intent_name:
+            return {'action_type': 'DISCARD' ,'card_index': int(intent_name[-1])}
         # NO INTENT 
         elif intent_name == "no_intent":
             hint = self.best_hint_to_give(super()._extract_dict_from_backend(player, self.state.observation(player)))
@@ -815,17 +818,31 @@ class HanabiIntentEnv(HanabiEnv):
         else:
             bool_act = [False]*len(self.intents[player_id])
             valide_act = dict(zip(self.intents[player_id], bool_act))
-            if player_id == obs_dict['current_player']:
-                for i in self.intents[player_id][2:]:
-                    valide_act[i] = True
+            
+            if self.intent_type[player_id] == 'pdn':
+                if player_id == obs_dict['current_player']:
+                    for i in self.intents[player_id][2:]:
+                        valide_act[i] = True
+                for move in observation.legal_moves():
+                    legal_move_as_dict = move.to_dict()
+                    if legal_move_as_dict['action_type'] is "PLAY":
+                        valide_act["play"] = True
+                    if legal_move_as_dict['action_type'] is "DISCARD":
+                        valide_act["discard"] = True
+            elif self.intent_type[player_id] == 'pdn_num':
+                if player_id == obs_dict['current_player']:
+                    valide_act['no_intent'] = True
+                for move in observation.legal_moves():
+                    legal_move_as_dict = move.to_dict()
+                    if legal_move_as_dict['action_type'] is "PLAY":
+                        valide_act["play_{}".format(legal_move_as_dict['card_index'])] = True
+                    if legal_move_as_dict['action_type'] is "DISCARD":
+                        valide_act["discard_{}".format(legal_move_as_dict['card_index'])] = True
+            else:
+                raise ValueError('intent_type key unknown : {}'.format(self.intent_type[player_id]))
+                
             obs_dict["legal_moves"] = []
             obs_dict["legal_moves_as_int"] = []
-            for move in observation.legal_moves():
-                legal_move_as_dict = move.to_dict()
-                if legal_move_as_dict['action_type'] is "PLAY":
-                    valide_act["play"] = True
-                if legal_move_as_dict['action_type'] is "DISCARD":
-                    valide_act["discard"] = True
             for ind, (key, valide) in enumerate(valide_act.items()):
                 if valide:
                     obs_dict["legal_moves"].append(key)

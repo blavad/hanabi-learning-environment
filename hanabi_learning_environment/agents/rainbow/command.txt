@@ -37,3 +37,11 @@ python -um train --base_dir=./tmp/rainbow_multi_all --gin_files='configs/hanabi_
 OU
 
 python -um train --base_dir=./tmp/rainbow_multi_pudn --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies='p-u-d-n'
+
+-----------------------------
+
+python -um train --base_dir=./tmp/rainbow_pudn_aww
+ --gin_files='configs/hanabi_rainbow.gin' --bot=SimpleAgentMulti --strategies=strategies-p-u-d-n-aww.json
+
+python -um train --base_dir=./tmp/rainbow_intent_pudn --gin_files='configs/hanabi_rainbow.gin' 
+--bot=SimpleAgentMulti --strategies=strategies-p-u-d-n.json --env=Hanabi-Intent-any-pdn_num
