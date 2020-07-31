@@ -27,7 +27,7 @@ RainbowAgent.tf_device = '/gpu:0'  # '/cpu:*' use for non-GPU version
 WrappedReplayMemory.replay_capacity = 50000 
 
 run_experiment.training_steps = 50000
-run_experiment.num_iterations = 50005
+run_experiment.num_iterations = 100005
 run_experiment.checkpoint_every_n = 500
 run_one_iteration.evaluate_every_n = 10
 
