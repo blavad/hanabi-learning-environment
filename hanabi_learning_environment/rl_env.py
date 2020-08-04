@@ -705,9 +705,17 @@ class HanabiIntentEnv(HanabiEnv):
             else:
                 return self._get_random_move(legal_moves)
         elif "play_" in intent_name:
-            return {'action_type': 'PLAY' ,'card_index': int(intent_name[-1])}
+            act_d = {'action_type': 'PLAY' ,'card_index': int(intent_name[-1])}
+            if act_d in legal_moves:
+                return act_d
+            else:
+                return self._get_random_move(legal_moves)
         elif "discard_" in intent_name:
-            return {'action_type': 'DISCARD' ,'card_index': int(intent_name[-1])}
+            act_d = {'action_type': 'DISCARD' ,'card_index': int(intent_name[-1])}
+            if act_d in legal_moves:
+                return act_d
+            else:
+                return self._get_random_move(legal_moves)
         # NO INTENT 
         elif intent_name == "no_intent":
             hint = self.best_hint_to_give(super()._extract_dict_from_backend(player, self.state.observation(player)))
