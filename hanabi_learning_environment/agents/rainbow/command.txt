@@ -45,3 +45,71 @@ python -um train --base_dir=./tmp/rainbow_pudn_aww
 
 python -um train --base_dir=./tmp/rainbow_intent_pudn --gin_files='configs/hanabi_rainbow.gin' 
 --bot=SimpleAgentMulti --strategies=strategies-p-u-d-n.json --env=Hanabi-Intent-any-pdn_num
+
+-----------------------------
+Int2Act SimpleBot v1 - 256
+
+python -um train --base_dir=./tmp/int2act_s1_256_01 --gin_files='configs/hanabi_rainbow_1.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.1
+
+python -um train --base_dir=./tmp/int2act_s1_256_02 --gin_files='configs/hanabi_rainbow_1.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.2
+
+python -um train --base_dir=./tmp/int2act_s1_256_03 --gin_files='configs/hanabi_rainbow_1.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.3
+
+python -um train --base_dir=./tmp/int2act_s1_256_05 --gin_files='configs/hanabi_rainbow_1.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.5
+
+-----------------------------
+Int2Act SimpleBot v1 - 512
+
+python -um train --base_dir=./tmp/int2act_s1_512_01 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.1
+
+python -um train --base_dir=./tmp/int2act_s1_512_02 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.2
+
+python -um train --base_dir=./tmp/int2act_s1_512_03 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.3
+
+python -um train --base_dir=./tmp/int2act_s1_512_05 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgent --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.5
+
+
+-----------------------------
+Int2Act SimpleBot 17280 - 256
+
+python -um train --base_dir=./tmp/int2act_s17280_256_01 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.1
+
+python -um train --base_dir=./tmp/int2act_s17280_256_02 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.2
+
+python -um train --base_dir=./tmp/int2act_s17280_256_03 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.3
+
+python -um train --base_dir=./tmp/int2act_s17280_256_05 --gin_files='configs/hanabi_rainbow_2.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.5
+
+-----------------------------
+Int2Act SimpleBot 17280 - 512
+
+python -um train --base_dir=./tmp/int2act_s17280_512_01 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.1
+
+python -um train --base_dir=./tmp/int2act_s17280_512_02 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.2
+
+python -um train --base_dir=./tmp/int2act_s17280_512_03 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.3
+
+python -um train --base_dir=./tmp/int2act_s17280_512_05 --gin_files='configs/hanabi_rainbow.gin' --bo
+t=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Int2Act-any-pdn --intent_ckpt=/path/to/intent --trust_rate=0.5
+
+-------------------------------
+Intent Agent
+
+python -um train --base_dir=./tmp/test_intent3_s1_512 --gin_files='configs/hanabi_rainbow.gin' --bot=SimpleAgent --env=Hanabi-Intent-any-pdn
+
+
+python -um train --base_dir=./tmp/test_intent3_s17280_512 --gin_files='configs/hanabi_rainbow.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Intent-any-pdn
+
+
+python -um train --base_dir=./tmp/test_intent11_s17280_512 --gin_files='configs/hanabi_rainbow.gin' --bot=SimpleAgentMulti --strategies=strategies-pu-pu--.json --env=Hanabi-Intent-any-pdn_num

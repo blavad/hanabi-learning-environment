@@ -573,7 +573,7 @@ class HanabiInt2ActEnv(HanabiEnv):
             if tmp_a.type() not in self.intent2actions[self.prev_intent]:
                 penalty = self.trust_rate
         obs, rew, done, info = super().step(action)
-        return (obs, rew - penalty, done, info)
+        return (obs, float(rew) - penalty, done, info)
     
     def _extract_dict_from_backend(self, player_id, observation):
         # print("Pass in HanabiInt2ActEnv ({class_name}) - extract dict".format(class_name=self.__class__))

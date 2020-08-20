@@ -122,7 +122,7 @@ def launch_experiment():
     environment = run_experiment.create_environment(game_type=FLAGS.env)
     if FLAGS.intent_ckpt is not None:
         environment.load_intent_policy(FLAGS.intent_ckpt)
-        environment.trust_rate = FLAGS.trust_rate
+        environment.trust_rate = float(FLAGS.trust_rate)
 
     obs_stacker = run_experiment.create_obs_stacker(environment)
     agent = run_experiment.create_agent(environment, obs_stacker, position=1)

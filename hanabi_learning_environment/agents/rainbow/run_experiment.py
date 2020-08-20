@@ -510,6 +510,7 @@ def run_experiment(agent,
     start_time = time.time()
     statistics = run_one_iteration(agent, bot, environment, obs_stacker, iteration,
                                    training_steps)
+    statistics['duration'] = time.time() - start_time
     tf.logging.info('Iteration %d took %d seconds', iteration,
                     time.time() - start_time)
     start_time = time.time()
